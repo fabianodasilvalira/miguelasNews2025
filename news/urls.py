@@ -1,0 +1,27 @@
+from django.conf import settings
+from django.conf.urls.static import static
+from django.urls import path
+from .views import NewsListCreate, NewsDetail, CategoryListCreate, CategoryDetail, CommentListCreate, CommentDetail, \
+    NewsLikeToggle
+
+# Definição das URLs
+urlpatterns = [
+    # URLs para Category (categorias de notícias)
+    path('categories/', CategoryListCreate.as_view(), name='category-list-create'),  # Lista e cria categorias
+    path('categories/<int:pk>/', CategoryDetail.as_view(), name='category-detail'),  # Detalha, atualiza e deleta uma categoria
+
+    # URLs para News (notícias)
+    path('news/', NewsListCreate.as_view(), name='news-list-create'),  # Lista e cria notícias
+    path('news/<int:pk>/', NewsDetail.as_view(), name='news-detail'),  # Detalha, atualiza e deleta uma notícia
+
+    # URL para listar/criar comentários de uma notícia específica
+    path('comments/', CommentListCreate.as_view(), name='comment-list-create'),
+    path('comments/<int:pk>/', CommentDetail.as_view(), name='comment-detail'),
+
+    path('news/<int:news_id>/like/', NewsLikeToggle.as_view(), name='news-like-toggle'),
+
+]
+
+# Serve arquivos de mídia em ambiente de desenvolvimento (modo DEBUG)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
