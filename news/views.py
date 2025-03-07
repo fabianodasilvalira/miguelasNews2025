@@ -1,6 +1,8 @@
 import logging
+from django.contrib.auth import get_user_model
 from rest_framework import generics, status, viewsets
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.decorators import permission_classes, api_view
+from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,7 +12,7 @@ from . import serializers
 logger = logging.getLogger(__name__)
 
 from .models import Category, News, NewsImage, Comment, NewsLike
-from .serializers import CategorySerializer, NewsSerializer, CommentSerializer
+from .serializers import CategorySerializer, NewsSerializer, CommentSerializer, UserCreateSerializer
 
 
 # Permissão customizada para leitores autenticados
@@ -177,3 +179,19 @@ class NewsLikeToggle(APIView):
             return Response({"detail": "Curtida removida."}, status=status.HTTP_200_OK)
         else:
             return Response({"detail": "Notícia curtida."}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Permitir acesso para qualquer um
+def create_user(request):
+    if request.method == 'POST':
+        serializer = UserCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                'message': 'User created successfully',
+                'user': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+

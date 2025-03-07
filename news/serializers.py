@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Category, News, NewsImage, Comment, NewsLike
 
@@ -40,3 +41,12 @@ class NewsSerializer(serializers.ModelSerializer):
         model = News
         fields = ['id', 'title', 'content', 'published_date', 'category', 'views', 'video', 'original_link', 'author', 'images', 'comments', 'likes']
 
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['username', 'email', 'password']
+
+    def create(self, validated_data):
+        user = get_user_model().objects.create_user(**validated_data)
+        return user

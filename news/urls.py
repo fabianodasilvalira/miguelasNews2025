@@ -2,12 +2,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import create_user  # Certifique-se de importar a função correta
+
 from .views import (
     NewsListCreate, NewsDetail, CategoryListCreate, CategoryDetail,
-    CommentListCreate, CommentDetail, NewsLikeToggle
+    CommentListCreate, CommentDetail, NewsLikeToggle,
 )
 
 # Definição das URLs
+
+
 urlpatterns = [
     # Endpoint para obtenção e refresh de tokens JWT
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -27,6 +31,9 @@ urlpatterns = [
 
     # URL para curtir/descurtir uma notícia
     path('news/<int:news_id>/like/', NewsLikeToggle.as_view(), name='news-like-toggle'),
+
+    path('users/', create_user, name='create-user'),  # Remova o .as_view()
+
 ]
 
 # Serve arquivos de mídia em ambiente de desenvolvimento (modo DEBUG)
