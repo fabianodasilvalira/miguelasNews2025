@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import Group, Permission
+from django.conf import settings  # Importando as configurações para acessar AUTH_USER_MODEL
 
-# Crie ou adicione permissões personalizadas aqui
+# Função para criar o grupo de jornalistas e adicionar permissões
 def create_journalist_group():
     journalist_group, created = Group.objects.get_or_create(name='Journalists')
     if created:
@@ -13,8 +14,6 @@ def create_journalist_group():
         journalist_group.permissions.set(permissions)
         journalist_group.save()
 
-
-# Defina diretamente os modelos aqui sem a necessidade de importá-los
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
@@ -42,23 +41,19 @@ class NewsImage(models.Model):
     def __str__(self):
         return f"Imagem para {self.news.title}"
 
-
-from django.contrib.auth.models import User
-
 class Comment(models.Model):
     content = models.TextField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE)  # Relacionamento com User (autor)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser
     news = models.ForeignKey(News, related_name='comments', on_delete=models.CASCADE)  # Relacionamento com News
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Comentário de {self.author} na notícia '{self.news.title}'"
 
-
 class NewsLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser
     news = models.ForeignKey(News, related_name='likes', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} liked {self.news.title}'
+        return f'{self.user.username} curtiu {self.news.title}'
