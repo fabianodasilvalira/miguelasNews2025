@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import Group, Permission
-from django.conf import settings  # Importando as configurações para acessar AUTH_USER_MODEL
+from django.conf import settings  # Para acessar o modelo CustomUser
 
 # Função para criar o grupo de jornalistas e adicionar permissões
 def create_journalist_group():

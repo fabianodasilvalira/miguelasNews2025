@@ -58,6 +58,17 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Expiração do token de acesso em 1 hora
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  # Expiração do token de refresh em 1 dia
+    'ROTATE_REFRESH_TOKENS': False,  # Se você quer ou não rotacionar os refresh tokens
+    'BLACKLIST_AFTER_ROTATION': False,  # Se você quer ou não invalidar o refresh token após rotação
+    'ALGORITHM': 'HS256',  # Algoritmo para assinar o token
+    'SIGNING_KEY': 'your_secret_key',  # A chave secreta para assinar os tokens
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Tipo de cabeçalho de autorização
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

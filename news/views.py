@@ -182,16 +182,59 @@ class NewsLikeToggle(APIView):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Permitir acesso para qualquer um
 def create_user(request):
-    if request.method == 'POST':
-        serializer = UserCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({
-                'message': 'User created successfully',
-                'user': serializer.data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    """
+    Permite que qualquer pessoa se cadastre como leitor.
+    """
+    data = request.data.copy()
+    data['role'] = 'leitor'  # Define automaticamente como leitor
+
+    serializer = UserCreateSerializer(data=data)
+    if serializer.is_valid():
+        user = serializer.save()
+        return Response({
+            'message': 'Leitor criado com sucesso!',
+            'user': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])  # Apenas usuários logados podem cadastrar escritores/admins
+def create_user_escritor_admin(request):
+    """
+    Permite que um administrador crie usuários com as roles 'escritor' ou 'admin'.
+    Somente um administrador pode criar usuários 'admin' ou 'escritor'.
+    """
+    # Verifica se o usuário autenticado é um administrador
+    if not request.user.is_superuser:
+        return Response({"detail": "Apenas administradores podem criar usuários 'admin' ou 'escritor'."},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    # Copia os dados do request
+    data = request.data.copy()
+
+    # Obtém o role do novo usuário (padrão é 'leitor', mas pode ser 'escritor' ou 'admin')
+    role = data.get('role', 'leitor')
+
+    # Valida se o role informado é válido
+    if role not in ['leitor', 'escritor', 'admin']:
+        return Response({"detail": "Role inválido. Apenas 'leitor', 'escritor' ou 'admin' são permitidos."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    # Cria o serializer para validar e salvar os dados
+    serializer = UserCreateSerializer(data=data)
+
+    if serializer.is_valid():
+        # Salva o usuário com a role especificada
+        user = serializer.save(role=role)
+
+        return Response({
+            'message': 'Usuário criado com sucesso!',
+            'user': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

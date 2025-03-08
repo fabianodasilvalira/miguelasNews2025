@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+from accounts.models import CustomUser
 from .models import Category, News, NewsImage, Comment, NewsLike
+from django.contrib.auth.models import User
 
 
 # Serializer para Categoria
@@ -42,11 +45,31 @@ class NewsSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'content', 'published_date', 'category', 'views', 'video', 'original_link', 'author', 'images', 'comments', 'likes']
 
 
+CustomUser = get_user_model()
+
+
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()
-        fields = ['username', 'email', 'password']
+        model = CustomUser
+        fields = ['username', 'email', 'password', 'role']  # Inclui os campos necessários
 
     def create(self, validated_data):
-        user = get_user_model().objects.create_user(**validated_data)
+        # Define a role padrão como 'leitor', caso não seja enviada
+        role = validated_data.get('role', 'leitor')
+
+        # Criação do usuário com hash da senha
+        user = CustomUser.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            role=role
+        )
         return user
+
+    def to_representation(self, instance):
+        """
+        Remove a senha antes de retornar os dados do usuário.
+        """
+        data = super().to_representation(instance)
+        data.pop('password', None)  # Remove a senha dos dados retornados
+        return data
