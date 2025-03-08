@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
+from . import serializers
 from .models import News, Category, Comment, NewsLike
 from .serializers import NewsSerializer, CategorySerializer, CommentSerializer, UserCreateSerializer
 
@@ -77,11 +78,12 @@ class CommentListCreate(generics.ListCreateAPIView):
         if news_id:
             try:
                 news = News.objects.get(id=news_id)
-                serializer.save(user=self.request.user, news=news)
+                serializer.save(user=self.request.user, news=news)  # Salva o comentário com o usuário logado
             except News.DoesNotExist:
                 raise serializers.ValidationError("Notícia não encontrada.")
         else:
             raise serializers.ValidationError("Campo 'news' é obrigatório.")
+
 
 # View para Detalhes, Atualização e Exclusão de Comentários
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):

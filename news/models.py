@@ -19,6 +19,8 @@ def create_journalist_group():
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
+    color = models.CharField(max_length=50, default="#FFFFFF")  # Campo de cor (hexadecimal)
+
 
     def __str__(self):
         return self.name
@@ -50,12 +52,12 @@ class NewsImage(models.Model):
 
 class Comment(models.Model):
     content = models.TextField()
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser
-    news = models.ForeignKey(News, related_name='comments', on_delete=models.CASCADE)  # Relacionamento com News
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser
+    news = models.ForeignKey('News', related_name='comments', on_delete=models.CASCADE)  # Relacionamento com News
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Comentário de {self.author} na notícia '{self.news.title}'"
+        return f"Comentário de {self.user} na notícia '{self.news.title}'"
 
 class NewsLike(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser

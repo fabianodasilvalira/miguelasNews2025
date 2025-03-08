@@ -9,7 +9,7 @@ from .models import Category, News, NewsImage, Comment, NewsLike
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'color']
 
 # Serializer para Imagens de Notícias
 class NewsImageSerializer(serializers.ModelSerializer):
@@ -21,7 +21,8 @@ class NewsImageSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'author', 'news', 'created_at']
+        fields = ['id', 'content', 'user', 'news', 'created_at']
+        read_only_fields = ['user', 'created_at']
 
 # Serializer para Curtidas em Notícias
 class NewsLikeSerializer(serializers.ModelSerializer):
@@ -34,10 +35,25 @@ class NewsSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     likes = NewsLikeSerializer(many=True, read_only=True)  # Para incluir as curtidas
     images = NewsImageSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)  # Serializador aninhado para a categoria
+    like_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de curtidas
+    comment_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de comentários
 
     class Meta:
         model = News
-        fields = ['id', 'title', 'content', 'published_date', 'category', 'views', 'video', 'original_link', 'author', 'images', 'comments', 'likes']
+        fields = [
+            'id', 'title', 'content', 'published_date', 'category', 'views', 'video', 'original_link', 'author',
+            'images', 'category','comments', 'likes', 'like_count', 'comment_count'
+        ]
+
+    def get_like_count(self, obj):
+        # Retorna a quantidade de curtidas para a notícia
+        return NewsLike.objects.filter(news=obj).count()
+
+    def get_comment_count(self, obj):
+        # Retorna a quantidade de comentários para a notícia
+        return Comment.objects.filter(news=obj).count()
+
 
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:

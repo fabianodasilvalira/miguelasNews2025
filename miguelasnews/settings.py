@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'accounts',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',  # Para incluir os assets do Swagger UI
 
 ]
 
@@ -77,7 +79,17 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MiguelasNews API',
+    'DESCRIPTION': 'API para gerenciar notícias, usuários e interações na plataforma MiguelasNews.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -108,17 +120,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'miguelasnews.wsgi.application'
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  # Assumindo que o Redis esteja rodando localmente
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
-}
-
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
