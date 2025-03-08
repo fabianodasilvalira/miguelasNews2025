@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import Group, Permission
 from django.conf import settings  # Para acessar o modelo CustomUser
+from django.core.exceptions import ValidationError
+
 
 # Função para criar o grupo de jornalistas e adicionar permissões
 def create_journalist_group():
@@ -22,14 +24,19 @@ class Category(models.Model):
         return self.name
 
 class News(models.Model):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, unique=True)  # Título único
     content = models.TextField()
     published_date = models.DateTimeField(auto_now_add=True)
     category = models.ForeignKey(Category, related_name='news', on_delete=models.CASCADE)
     views = models.PositiveIntegerField(default=0)
     video = models.FileField(upload_to='news_videos/', blank=True, null=True)  # Para vídeos
     original_link = models.URLField(blank=True, null=True)  # Link original, caso a notícia tenha sido copiada
-    author = models.CharField(max_length=100, blank=True, null=True)  # Autor da notícia
+    author = models.CharField(max_length=200, unique=True)
+
+    def clean(self):
+        # Verifica se o título já existe
+        if News.objects.filter(title=self.title).exclude(pk=self.pk).exists():
+            raise ValidationError("Uma notícia com este título já existe.")
 
     def __str__(self):
         return self.title
@@ -54,6 +61,9 @@ class NewsLike(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # Relacionamento com CustomUser
     news = models.ForeignKey(News, related_name='likes', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'news')  # Evita curtidas duplicadas
 
     def __str__(self):
         return f'{self.user.username} curtiu {self.news.title}'

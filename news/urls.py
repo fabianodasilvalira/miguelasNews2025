@@ -1,16 +1,17 @@
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import create_user, create_user_escritor_admin  # Certifique-se de importar a função correta
-
+from rest_framework.routers import DefaultRouter
 from .views import (
-    NewsListCreate, NewsDetail, CategoryListCreate, CategoryDetail,
+    NewsViewSet, CategoryListCreate, CategoryDetail,
     CommentListCreate, CommentDetail, NewsLikeToggle,
+    create_user, create_user_escritor_admin
 )
 
-# Definição das URLs
-
+# Configuração do Router para NewsViewSet
+router = DefaultRouter()
+router.register(r'news', NewsViewSet, basename='news')
 
 urlpatterns = [
     # Endpoint para obtenção e refresh de tokens JWT
@@ -18,12 +19,8 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # URLs para Category (categorias de notícias)
-    path('categories/', CategoryListCreate.as_view(), name='category-list-create'),  # Lista e cria categorias
-    path('categories/<int:pk>/', CategoryDetail.as_view(), name='category-detail'),  # Detalha, atualiza e deleta uma categoria
-
-    # URLs para News (notícias)
-    path('news/', NewsListCreate.as_view(), name='news-list-create'),  # Lista e cria notícias
-    path('news/<int:pk>/', NewsDetail.as_view(), name='news-detail'),  # Detalha, atualiza e deleta uma notícia
+    path('categories/', CategoryListCreate.as_view(), name='category-list-create'),
+    path('categories/<int:pk>/', CategoryDetail.as_view(), name='category-detail'),
 
     # URLs para Comentários
     path('comments/', CommentListCreate.as_view(), name='comment-list-create'),
@@ -32,8 +29,12 @@ urlpatterns = [
     # URL para curtir/descurtir uma notícia
     path('news/<int:news_id>/like/', NewsLikeToggle.as_view(), name='news-like-toggle'),
 
-    path('users/register/', create_user, name='register-reader'),  # cadastrar como leitor
-    path('users/admin/create/', create_user_escritor_admin, name='register-admin-or-writer'), # riar escritores/admins
+    # URLs para criação de usuários
+    path('users/register/', create_user, name='register-reader'),
+    path('users/admin/create/', create_user_escritor_admin, name='register-admin-or-writer'),
+
+    # Inclui as URLs geradas pelo Router
+    path('', include(router.urls)),
 ]
 
 # Serve arquivos de mídia em ambiente de desenvolvimento (modo DEBUG)
