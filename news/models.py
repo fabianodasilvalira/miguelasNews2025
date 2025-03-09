@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from django.db import models
 from django.contrib.auth.models import Group, Permission
 from django.conf import settings  # Para acessar o modelo CustomUser
@@ -25,6 +27,28 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class Sponsor(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Sponsor Name")
+    logo = models.ImageField(upload_to='sponsors/', verbose_name="Sponsor Logo", null=True, blank=True)
+    website = models.URLField(verbose_name="Website", null=True, blank=True)
+    start_date = models.DateField(verbose_name="Start Date")
+    end_date = models.DateField(verbose_name="End Date")
+    is_active = models.BooleanField(default=True, verbose_name="Is Active")
+    description = models.TextField(verbose_name="Description", null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_currently_active(self):
+        """Check if the sponsor is currently active based on start and end dates."""
+        today = timezone.now().date()
+        return self.start_date <= today <= self.end_date
+
+    class Meta:
+        verbose_name = "Sponsor"
+        verbose_name_plural = "Sponsors"
+
 class News(models.Model):
     title = models.CharField(max_length=200, unique=True)  # Título único
     content = models.TextField()
@@ -34,6 +58,9 @@ class News(models.Model):
     video = models.FileField(upload_to='news_videos/', blank=True, null=True)  # Para vídeos
     original_link = models.URLField(blank=True, null=True)  # Link original, caso a notícia tenha sido copiada
     author = models.CharField(max_length=200, unique=True)
+    highlight = models.BooleanField(default=False)  # Campo para marcar como destaque
+    sponsors = models.ManyToManyField(Sponsor, related_name='news', blank=True)
+
 
     def clean(self):
         # Verifica se o título já existe

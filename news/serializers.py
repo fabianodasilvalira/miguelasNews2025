@@ -1,9 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
-
 from accounts.models import CustomUser
-from .models import Category, News, NewsImage, Comment, NewsLike
+from .models import Category, News, NewsImage, Comment, NewsLike, Sponsor
+from rest_framework import serializers
+
+
 
 # Serializer para Categoria
 class CategorySerializer(serializers.ModelSerializer):
@@ -30,20 +32,28 @@ class NewsLikeSerializer(serializers.ModelSerializer):
         model = NewsLike
         fields = ['id', 'user', 'news', 'created_at']
 
+
+# Serializer para Patrocinador
+class SponsorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sponsor
+        fields = ['id', 'name', 'logo', 'website', 'start_date', 'end_date', 'description']
+
 # Serializer para Notícia
 class NewsSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, read_only=True)
-    likes = NewsLikeSerializer(many=True, read_only=True)  # Para incluir as curtidas
-    images = NewsImageSerializer(many=True, read_only=True)
-    category = CategorySerializer(read_only=True)  # Serializador aninhado para a categoria
+    comments = CommentSerializer(many=True, read_only=True)  # Comentários relacionados à notícia
+    likes = NewsLikeSerializer(many=True, read_only=True)  # Curtidas relacionadas à notícia
+    images = NewsImageSerializer(many=True, read_only=True)  # Imagens relacionadas à notícia
+    category = CategorySerializer(read_only=True)  # Categoria da notícia
     like_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de curtidas
     comment_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de comentários
+    sponsors = SponsorSerializer(many=True, read_only=True)  # Patrocinadores relacionados à notícia
 
     class Meta:
         model = News
         fields = [
             'id', 'title', 'content', 'published_date', 'category', 'views', 'video', 'original_link', 'author',
-            'images', 'category','comments', 'likes', 'like_count', 'comment_count'
+            'images', 'category', 'comments', 'likes', 'like_count', 'comment_count', 'highlight', 'sponsors'
         ]
 
     def get_like_count(self, obj):
@@ -73,3 +83,5 @@ class UserCreateSerializer(serializers.ModelSerializer):
             role=validated_data.get('role', 'Leitor')  # Se role não for fornecido, usa 'Leitor' por padrão
         )
         return user  # Retorna o usuário salvo
+
+

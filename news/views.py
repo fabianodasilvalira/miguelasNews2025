@@ -10,6 +10,9 @@ from rest_framework.exceptions import PermissionDenied
 from . import serializers
 from .models import News, Category, Comment, NewsLike
 from .serializers import NewsSerializer, CategorySerializer, CommentSerializer, UserCreateSerializer
+from django.utils import timezone
+from django.shortcuts import render
+from .models import Sponsor
 
 # Permissões Personalizadas
 class IsReader(BasePermission):
@@ -161,3 +164,12 @@ def create_user_escritor_admin(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def list_active_sponsors(request):
+    today = timezone.now().date()
+    active_sponsors = Sponsor.objects.filter(
+        start_date__lte=today,  # Start date is less than or equal to today
+        end_date__gte=today    # End date is greater than or equal to today
+    )
+    return render(request, 'sponsors.html', {'sponsors': active_sponsors})
