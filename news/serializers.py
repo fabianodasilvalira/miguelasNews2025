@@ -44,7 +44,7 @@ class NewsSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)  # Comentários relacionados à notícia
     likes = NewsLikeSerializer(many=True, read_only=True)  # Curtidas relacionadas à notícia
     images = NewsImageSerializer(many=True, read_only=True)  # Imagens relacionadas à notícia
-    category = CategorySerializer(read_only=True)  # Categoria da notícia
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())  # Permite atribuir a categoria
     like_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de curtidas
     comment_count = serializers.SerializerMethodField()  # Campo calculado para quantidade de comentários
     sponsors = SponsorSerializer(many=True, read_only=True)  # Patrocinadores relacionados à notícia
@@ -66,9 +66,14 @@ class NewsSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password', 'role']  # Inclua todos os campos necessários
+        fields = ['first_name', 'last_name', 'email', 'password', 'role']  # Inclui 'username'
+        extra_kwargs = {
+            'password': {'write_only': True},  # Garante que a senha não seja retornada
+        }
 
     def validate_role(self, value):
         if value not in ['Leitor', 'Escritor', 'Admin']:
@@ -76,12 +81,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            role=validated_data.get('role', 'Leitor')  # Se role não for fornecido, usa 'Leitor' por padrão
-        )
-        return user  # Retorna o usuário salvo
+        password = validated_data.pop('password')  # Remove a senha para criptografar
+        user = CustomUser(**validated_data)
+        user.set_password(password)  # Criptografa a senha
+        user.save()  # Salva o usuário no banco de dados
+        return user
 
 

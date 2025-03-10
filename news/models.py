@@ -57,7 +57,7 @@ class News(models.Model):
     views = models.PositiveIntegerField(default=0)
     video = models.FileField(upload_to='news_videos/', blank=True, null=True)  # Para vídeos
     original_link = models.URLField(blank=True, null=True)  # Link original, caso a notícia tenha sido copiada
-    author = models.CharField(max_length=200, unique=True)
+    author = models.CharField(max_length=200)
     highlight = models.BooleanField(default=False)  # Campo para marcar como destaque
     sponsors = models.ManyToManyField(Sponsor, related_name='news', blank=True)
 

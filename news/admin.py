@@ -10,17 +10,17 @@ class NewsImageInline(admin.TabularInline):
     fields = ['image']
 
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'published_date', 'author']  # Adicionado 'author'
+    list_display = ['id','title', 'category', 'published_date', 'author']  # Adicionado 'author'
     search_fields = ['title', 'content']
     list_filter = ['category']
     inlines = [NewsImageInline]
 
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']
+    list_display = ['id', 'name', 'description']
     search_fields = ['name']
 
 class NewsLikeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'news', 'created_at')
+    list_display = ('id', 'user', 'news', 'created_at')
     list_filter = ('created_at', 'news')
     search_fields = ('user__username', 'news__title')
 
@@ -38,9 +38,15 @@ admin.site.unregister(Group)
 # Registrar o GroupAdmin personalizado
 @admin.register(Group)
 class CustomGroupAdmin(GroupAdmin):
-    list_display = ['name', 'get_users']
+    list_display = ['name', 'get_users', 'get_users_count']
     search_fields = ['name']
 
     def get_users(self, obj):
         return ", ".join([user.username for user in obj.user_set.all()])
+
     get_users.short_description = 'Usuários'
+
+    def get_users_count(self, obj):
+        return obj.user_set.count()
+
+    get_users_count.short_description = 'Número de Usuários'

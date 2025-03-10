@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, Group
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -10,26 +8,29 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
-        user.save(using=self._db)
+        user.save(using=self._db)  # Salva o usuário antes de retornar
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'Admin')  # Define o papel como 'Admin' para superusuários
+
+        if password is None:
+            raise ValueError('O superusuário precisa de uma senha')
+
         return self.create_user(email, password, **extra_fields)
 
 class CustomUser(AbstractUser):
-    # Remove o campo 'username' e usa 'email' como identificador único
-    username = None
-    email = models.EmailField(unique=True)
+    username = None  # Remove o campo username
+    email = models.EmailField(unique=True)  # Usa email como identificador único
     role = models.CharField(
         max_length=20,
         choices=[('Leitor', 'Leitor'), ('Escritor', 'Escritor'), ('Admin', 'Admin')],
         default='Leitor'
     )
 
-    USERNAME_FIELD = 'email'  # Usa 'email' como campo de login
+    USERNAME_FIELD = 'email'  # Define email como campo de identificação
     REQUIRED_FIELDS = []  # Remove 'username' dos campos obrigatórios
 
     objects = CustomUserManager()
@@ -38,15 +39,11 @@ class CustomUser(AbstractUser):
         return self.email
 
     def save(self, *args, **kwargs):
-        # Verifica se o campo 'role' foi alterado
-        if self.pk:  # Verifica se o usuário já existe no banco de dados
-            old_user = CustomUser.objects.get(pk=self.pk)
-            if old_user.role != self.role:  # Se o 'role' foi alterado
-                self.update_groups_based_on_role()
-        else:  # Se é um novo usuário
-            self.update_groups_based_on_role()
-
+        # Salva o usuário primeiro para garantir que o id seja atribuído
         super().save(*args, **kwargs)
+
+        # Atualiza os grupos com base no 'role'
+        self.update_groups_based_on_role()
 
     def update_groups_based_on_role(self):
         # Remove o usuário de todos os grupos

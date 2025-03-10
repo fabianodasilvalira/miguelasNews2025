@@ -38,9 +38,9 @@ class NewsViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            self.permission_classes = [IsAuthenticated, IsWriter | IsAdmin]
+            self.permission_classes = [IsAuthenticated, IsWriter]  # Apenas IsWriter pode criar/editar/excluir
         else:
-            self.permission_classes = [AllowAny]
+            self.permission_classes = [AllowAny]  # Outros métodos podem ser públicos
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -74,7 +74,7 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreate(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsReader]
+    permission_classes = [IsReader | IsWriter]
 
     def perform_create(self, serializer):
         news_id = self.request.data.get('news')
@@ -108,7 +108,7 @@ class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
 
 # View para Curtir/Descurtir Notícias
 class NewsLikeToggle(APIView):
-    permission_classes = [IsReader]
+    permission_classes = [IsReader | IsWriter]
 
     def post(self, request, news_id, *args, **kwargs):
         user = request.user
@@ -127,15 +127,20 @@ class NewsLikeToggle(APIView):
 
 # View para Criar Usuários (Leitores)
 @api_view(['POST'])
+@permission_classes([AllowAny])  # Permite que qualquer um crie um Leitor
 def create_user(request):
     data = request.data.copy()
-    data['role'] = 'Leitor'
+    data['role'] = 'Leitor'  # Define a role como 'Leitor'
 
+    # O campo 'username' já vem no request, então não é necessário adicionar manualmente
     serializer = UserCreateSerializer(data=data)
     if serializer.is_valid():
         user = serializer.save()  # Salva o usuário no banco de dados
+
+        # Adiciona o usuário ao grupo 'Leitor'
         group = Group.objects.get(name='Leitor')
-        user.groups.add(group)  # Agora o usuário tem um ID e pode ser adicionado ao grupo
+        user.groups.add(group)
+
         return Response({
             'message': 'Leitor criado com sucesso!',
             'user': serializer.data
@@ -143,11 +148,15 @@ def create_user(request):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdmin])
 def create_user_escritor_admin(request):
     data = request.data.copy()
-    role = data.get('role', 'Leitor')
+    role = data.get('role')
+
+    if not role:
+        return Response({"detail": "O campo 'role' é obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
 
     if role not in ['Admin', 'Escritor', 'Leitor']:
         return Response({"detail": "Role inválido. Aceito apenas: 'Admin', 'Escritor' ou 'Leitor'."},
